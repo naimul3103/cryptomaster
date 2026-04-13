@@ -180,7 +180,48 @@ Please do **not** commit `.env` or any file containing real credentials.
 
 ---
 
+
+
+👥 Contributors
+
+CryptoMaster was built as a university course project by a dedicated team of 3 members. Meet the team below!
+
+<table>
+<tr>
+  
+
+  
+<td align="center">
+<a href="https://github.com/ARPRAHMAN">
+<img src="https://avatars.githubusercontent.com/u/107850455?v=4" width="110px;" alt="ARPRAHMAN"/><br />
+<sub><b>ARPRAHMAN</b></sub>
+</a><br />
+🎨 <i>UI/UX & Frontend</i><br />
+🔗 <a href="https://github.com/ARPRAHMAN">GitHub Profile</a>
+</td>
+
+<td align="center">
+<a href="https://github.com/naimul3103">
+<img src="https://avatars.githubusercontent.com/u/129685512?v=4" width="110px;" alt="Contributor 3"/><br />
+<sub><b>Contributor Three</b></sub>
+</a><br />
+🛡️ <i>Backend & Database </i><br />
+🔗 <a href="https://www.google.com/search?q=https://github.com/your-github-username-3">GitHub Profile</a>
+</td>
+
+<td align="center">
+<a href="https://github.com/AbuObayed25">
+<img src="https://avatars.githubusercontent.com/u/115519807?v=4" width="110px;" alt="AbuObayed25"/><br />
+<sub><b>AbuObayed25</b></sub>
+</a><br />
+💻 <i>Full Stack Developer</i><br />
+🔗 <a href="https://github.com/AbuObayed25">GitHub Profile</a>
+</td>
+</tr>
+</table>
+
+If you'd like to contribute to this project, please read our Contributing Guidelines.
+
 ## 📄 License
 
 MIT © 2025 — see [LICENSE](LICENSE) for details.
-# cryptomaster
