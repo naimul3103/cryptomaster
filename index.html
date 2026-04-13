@@ -1,0 +1,2439 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CryptoMaster</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-chart-financial@0.1.1/dist/chartjs-chart-financial.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/luxon@3.4.4/build/global/luxon.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-luxon@1.3.1/dist/chartjs-adapter-luxon.umd.min.js"></script>
+
+    <style>
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      :root {
+        --teal: #64c192;
+        --teal-light: #7fffd4;
+        --teal-dim: rgba(100, 193, 146, 0.18);
+        --red: #e8163e;
+        --green: #04d16d;
+        --bg: #0b1a14;
+        --glass: rgba(255, 255, 255, 0.11);
+        --gb: rgba(255, 255, 255, 0.17);
+        --text: #fff;
+        --dim: rgba(255, 255, 255, 0.55);
+        --fh: "Syne", sans-serif;
+        --fm: "Space Mono", monospace;
+        --nav: 70px;
+      }
+      html,
+      body {
+        height: 100%;
+        overflow: hidden;
+        font-family: var(--fh);
+        background: var(--bg);
+        color: var(--text);
+      }
+
+      /* ── Screens ── */
+      .screen {
+        position: fixed;
+        inset: 0;
+        display: none;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+      }
+      .screen.active {
+        display: flex;
+      }
+      .hidden {
+        display: none !important;
+      }
+
+      /* ── Backgrounds ── */
+      .auth-bg,
+      .app-bg {
+        position: absolute;
+        inset: 0;
+        z-index: 0;
+        background:
+          radial-gradient(
+            ellipse 80% 60% at 65% 5%,
+            rgba(100, 193, 146, 0.3) 0%,
+            transparent 65%
+          ),
+          radial-gradient(
+            ellipse 55% 70% at 5% 95%,
+            rgba(40, 130, 100, 0.25) 0%,
+            transparent 65%
+          ),
+          linear-gradient(160deg, #0a1f18 0%, #0b1a14 45%, #071510 100%);
+      }
+      .glass-card {
+        background: var(--glass);
+        border: 1px solid var(--gb);
+        backdrop-filter: blur(18px);
+        -webkit-backdrop-filter: blur(18px);
+        border-radius: 20px;
+      }
+
+      /* ══ AUTH ══════════════════════════════════════════ */
+      #screen-auth {
+        z-index: 100;
+      }
+      .auth-wrap {
+        position: relative;
+        z-index: 1;
+        width: 100%;
+        max-width: 400px;
+        padding: 24px 20px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+      .auth-logo {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 28px;
+      }
+      .auth-brand {
+        font-size: 22px;
+        font-weight: 800;
+        letter-spacing: 1px;
+        color: var(--teal-light);
+      }
+
+      .auth-card {
+        width: 100%;
+        padding: 28px 24px 24px;
+        animation: fadeUp 0.35s ease;
+      }
+      @keyframes fadeUp {
+        from {
+          opacity: 0;
+          transform: translateY(14px);
+        }
+        to {
+          opacity: 1;
+          transform: none;
+        }
+      }
+
+      .auth-title {
+        font-size: 22px;
+        font-weight: 800;
+        margin-bottom: 4px;
+      }
+      .auth-sub {
+        font-size: 13px;
+        color: var(--dim);
+        margin-bottom: 22px;
+      }
+
+      .field-group {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        margin-bottom: 14px;
+      }
+      .field-group label {
+        font-size: 12px;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+        color: var(--dim);
+        text-transform: uppercase;
+      }
+      .field-group input {
+        background: rgba(255, 255, 255, 0.07);
+        border: 1px solid var(--gb);
+        border-radius: 12px;
+        padding: 13px 16px;
+        color: #fff;
+        font-family: var(--fh);
+        font-size: 14px;
+        outline: none;
+        transition: border-color 0.2s;
+      }
+      .field-group input:focus {
+        border-color: var(--teal);
+      }
+      .field-group input::placeholder {
+        color: rgba(255, 255, 255, 0.35);
+      }
+
+      .auth-error {
+        font-size: 13px;
+        color: #ff6b6b;
+        min-height: 18px;
+        margin-bottom: 8px;
+        background: rgba(232, 22, 62, 0.12);
+        border-radius: 8px;
+        padding: 0;
+        overflow: hidden;
+        max-height: 0;
+        transition:
+          max-height 0.25s,
+          padding 0.25s;
+      }
+      .auth-error.show {
+        max-height: 60px;
+        padding: 8px 12px;
+      }
+
+      .auth-btn {
+        width: 100%;
+        padding: 15px;
+        background: var(--teal);
+        color: #fff;
+        border: none;
+        border-radius: 13px;
+        font-family: var(--fh);
+        font-size: 15px;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+        cursor: pointer;
+        transition:
+          background 0.2s,
+          transform 0.1s;
+        margin-bottom: 14px;
+      }
+      .auth-btn:hover {
+        background: var(--teal-light);
+        color: #0b1a14;
+      }
+      .auth-btn:active {
+        transform: scale(0.98);
+      }
+      .auth-btn:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
+
+      .auth-switch {
+        font-size: 13px;
+        color: var(--dim);
+        text-align: center;
+      }
+      .link {
+        color: var(--teal-light);
+        cursor: pointer;
+        font-weight: 700;
+        text-decoration: underline;
+      }
+      .auth-hint {
+        font-size: 11px;
+        color: rgba(255, 255, 255, 0.35);
+        text-align: center;
+        margin-top: 10px;
+      }
+
+      /* ══ ONBOARDING ══════════════════════════════════ */
+      #screen-onboard {
+        z-index: 90;
+      }
+      .onboard-content {
+        position: relative;
+        z-index: 1;
+        width: 100%;
+        max-width: 420px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 40px 30px;
+        text-align: center;
+      }
+      .onboard-logo {
+        margin-bottom: 36px;
+        animation: float 3s ease-in-out infinite;
+      }
+      @keyframes float {
+        0%,
+        100% {
+          transform: translateY(0);
+        }
+        50% {
+          transform: translateY(-10px);
+        }
+      }
+      .onboard-slides {
+        min-height: 130px;
+        width: 100%;
+      }
+      .slide {
+        display: none;
+        animation: fadeUp 0.45s ease;
+      }
+      .slide.active {
+        display: block;
+      }
+      .onboard-title {
+        font-size: 30px;
+        font-weight: 800;
+        letter-spacing: 2px;
+        margin-bottom: 14px;
+        line-height: 1.2;
+      }
+      .onboard-desc {
+        font-size: 15px;
+        font-weight: 500;
+        color: var(--dim);
+        line-height: 1.7;
+      }
+      .onboard-dots {
+        display: flex;
+        gap: 8px;
+        margin: 28px 0 22px;
+      }
+      .dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.25);
+        transition: all 0.3s;
+        cursor: pointer;
+      }
+      .dot.active {
+        background: var(--teal-light);
+        width: 24px;
+        border-radius: 4px;
+      }
+      .onboard-btn {
+        width: 100%;
+        padding: 16px;
+        background: var(--teal);
+        color: #fff;
+        border: none;
+        border-radius: 14px;
+        font-family: var(--fh);
+        font-size: 16px;
+        font-weight: 700;
+        letter-spacing: 1px;
+        cursor: pointer;
+        transition: background 0.2s;
+      }
+      .onboard-btn:hover {
+        background: var(--teal-light);
+        color: #0b1a14;
+      }
+      .onboard-skip {
+        margin-top: 14px;
+        background: none;
+        border: none;
+        color: var(--dim);
+        font-family: var(--fh);
+        font-size: 14px;
+        cursor: pointer;
+        text-decoration: underline;
+      }
+
+      /* ══ APP SHELL ═══════════════════════════════════ */
+      #screen-app {
+        align-items: stretch;
+        justify-content: flex-start;
+        z-index: 1;
+      }
+      .page {
+        display: none;
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: var(--nav);
+        overflow-y: auto;
+        overflow-x: hidden;
+        -webkit-overflow-scrolling: touch;
+      }
+      .page.active {
+        display: block;
+      }
+      .page::-webkit-scrollbar {
+        display: none;
+      }
+
+      /* Top bar */
+      .top-bar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 52px 20px 16px;
+        position: relative;
+        z-index: 2;
+      }
+      .top-bar-left {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      .top-bar-right {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .avatar-ring {
+        width: 42px;
+        height: 42px;
+        border-radius: 50%;
+        background: var(--glass);
+        border: 2px solid var(--teal);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .greeting {
+        font-size: 11px;
+        color: var(--dim);
+      }
+      .username {
+        font-size: 16px;
+        font-weight: 700;
+        letter-spacing: 0.3px;
+      }
+      .balance-chip {
+        background: var(--teal-dim);
+        border: 1px solid var(--teal);
+        color: var(--teal-light);
+        font-family: var(--fm);
+        font-size: 13px;
+        font-weight: 700;
+        padding: 5px 13px;
+        border-radius: 30px;
+      }
+      .icon-btn {
+        width: 36px;
+        height: 36px;
+        background: var(--glass);
+        border: 1px solid var(--gb);
+        border-radius: 50%;
+        color: var(--dim);
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition:
+          color 0.2s,
+          border-color 0.2s;
+      }
+      .icon-btn:hover {
+        color: #fff;
+        border-color: var(--teal);
+      }
+
+      /* Bottom nav */
+      .bottom-nav {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: var(--nav);
+        background: rgba(11, 26, 20, 0.9);
+        backdrop-filter: blur(20px);
+        border-top: 1px solid var(--gb);
+        display: flex;
+        z-index: 50;
+      }
+      .nav-btn {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 4px;
+        background: none;
+        border: none;
+        color: var(--dim);
+        font-family: var(--fh);
+        font-size: 11px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: color 0.2s;
+      }
+      .nav-btn.active {
+        color: var(--teal-light);
+      }
+      .nav-btn.active svg {
+        stroke: var(--teal-light);
+      }
+
+      /* ══ MARKET ══════════════════════════════════════ */
+      .news-carousel-wrap {
+        padding: 0 0 0 15px;
+        overflow: hidden;
+      }
+      .news-carousel {
+        display: flex;
+        gap: 12px;
+        overflow-x: auto;
+        padding-bottom: 8px;
+        scroll-snap-type: x mandatory;
+        -webkit-overflow-scrolling: touch;
+      }
+      .news-carousel::-webkit-scrollbar {
+        display: none;
+      }
+      .news-card {
+        flex-shrink: 0;
+        width: 215px;
+        background: var(--glass);
+        border: 1px solid var(--gb);
+        border-radius: 16px;
+        overflow: hidden;
+        cursor: pointer;
+        scroll-snap-align: start;
+        transition: transform 0.2s;
+      }
+      .news-card:hover {
+        transform: translateY(-3px);
+      }
+      .news-img {
+        height: 88px;
+        position: relative;
+        display: flex;
+        align-items: flex-end;
+        padding: 8px;
+      }
+      .news-src {
+        background: rgba(0, 0, 0, 0.5);
+        color: var(--teal-light);
+        font-size: 9px;
+        font-weight: 700;
+        letter-spacing: 1px;
+        padding: 3px 8px;
+        border-radius: 20px;
+        font-family: var(--fm);
+      }
+      .news-headline {
+        font-size: 11px;
+        font-weight: 500;
+        color: var(--dim);
+        padding: 10px;
+        line-height: 1.5;
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+      }
+      .section-label {
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 2px;
+        color: var(--teal-light);
+        text-transform: uppercase;
+        padding: 14px 20px 10px;
+      }
+      .market-list {
+        padding: 0 15px 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+      .market-card {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        background: var(--glass);
+        border: 1px solid var(--gb);
+        border-radius: 14px;
+        padding: 12px 14px;
+        cursor: pointer;
+        transition:
+          background 0.18s,
+          transform 0.15s;
+        animation: slideUp 0.3s ease both;
+      }
+      .market-card:hover {
+        background: rgba(255, 255, 255, 0.17);
+        transform: translateX(3px);
+      }
+      @keyframes slideUp {
+        from {
+          opacity: 0;
+          transform: translateY(10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      .coin-logo {
+        width: 34px;
+        height: 34px;
+        border-radius: 50%;
+        object-fit: contain;
+        background: rgba(255, 255, 255, 0.07);
+        padding: 3px;
+        flex-shrink: 0;
+      }
+      .coin-fallback {
+        width: 34px;
+        height: 34px;
+        border-radius: 50%;
+        background: var(--teal-dim);
+        border: 1px solid var(--teal);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-family: var(--fm);
+        font-size: 9px;
+        font-weight: 700;
+        color: var(--teal-light);
+        flex-shrink: 0;
+      }
+      .coin-name {
+        flex: 1;
+        font-size: 15px;
+        font-weight: 700;
+        letter-spacing: 0.3px;
+      }
+      .coin-price {
+        font-family: var(--fm);
+        font-size: 13px;
+        margin-right: 8px;
+      }
+      .pct-badge {
+        padding: 4px 9px;
+        border-radius: 10px;
+        font-family: var(--fm);
+        font-size: 11px;
+        font-weight: 700;
+        min-width: 62px;
+        text-align: center;
+      }
+      .pct-badge.pos {
+        background: var(--green);
+        color: #fff;
+      }
+      .pct-badge.neg {
+        background: var(--red);
+        color: #fff;
+      }
+      .loading-spinner {
+        display: flex;
+        justify-content: center;
+        padding: 50px 0;
+      }
+      .spinner {
+        width: 36px;
+        height: 36px;
+        border: 3px solid rgba(255, 255, 255, 0.1);
+        border-top-color: var(--teal-light);
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+      }
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+      .market-error {
+        text-align: center;
+        padding: 30px 20px;
+        color: var(--dim);
+        font-size: 14px;
+        line-height: 1.8;
+      }
+      .market-error b {
+        color: #ff8c8c;
+      }
+
+      /* ══ TRADE ═══════════════════════════════════════ */
+      .trade-bar {
+        padding-top: 56px;
+      }
+      .back-btn {
+        width: 38px;
+        height: 38px;
+        background: var(--glass);
+        border: 1px solid var(--gb);
+        color: #fff;
+        font-size: 18px;
+        border-radius: 50%;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: background 0.2s;
+      }
+      .back-btn:hover {
+        background: var(--teal-dim);
+      }
+      .trade-symbol-info {
+        display: flex;
+        align-items: baseline;
+        gap: 4px;
+      }
+      .trade-symbol-name {
+        font-size: 22px;
+        font-weight: 800;
+        letter-spacing: 1px;
+      }
+      .trade-pair-label {
+        font-size: 14px;
+        color: var(--dim);
+      }
+      .trade-logo-img {
+        width: 38px;
+        height: 38px;
+        border-radius: 50%;
+        object-fit: contain;
+        background: rgba(255, 255, 255, 0.07);
+        padding: 3px;
+      }
+      .trade-price-block {
+        padding: 4px 20px 16px;
+        display: flex;
+        align-items: baseline;
+        gap: 12px;
+      }
+      .trade-price {
+        font-family: var(--fm);
+        font-size: 27px;
+        font-weight: 700;
+        color: var(--teal-light);
+      }
+      .trade-change {
+        font-family: var(--fm);
+        font-size: 14px;
+      }
+      .trade-change.pos {
+        color: var(--green);
+      }
+      .trade-change.neg {
+        color: var(--red);
+      }
+      .interval-bar {
+        display: flex;
+        gap: 6px;
+        padding: 0 15px 14px;
+        overflow-x: auto;
+      }
+      .interval-bar::-webkit-scrollbar {
+        display: none;
+      }
+      .interval-btn {
+        padding: 6px 14px;
+        background: var(--glass);
+        border: 1px solid var(--gb);
+        color: var(--dim);
+        font-family: var(--fm);
+        font-size: 12px;
+        font-weight: 700;
+        border-radius: 8px;
+        cursor: pointer;
+        white-space: nowrap;
+        transition: all 0.2s;
+      }
+      .interval-btn.active {
+        background: var(--teal);
+        border-color: var(--teal);
+        color: #fff;
+      }
+      .chart-container {
+        position: relative;
+        height: 230px;
+        margin: 0 15px 10px;
+        background: var(--glass);
+        border: 1px solid var(--gb);
+        border-radius: 16px;
+        overflow: hidden;
+      }
+      .chart-container canvas {
+        width: 100% !important;
+      }
+      .chart-loading {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(11, 26, 20, 0.6);
+        backdrop-filter: blur(4px);
+        border-radius: 16px;
+        transition: opacity 0.3s;
+      }
+      .chart-loading.hidden {
+        opacity: 0;
+        pointer-events: none;
+      }
+      .info-body {
+        margin: 0 15px;
+        background: var(--glass);
+        border: 1px solid var(--gb);
+        border-radius: 16px;
+        overflow: hidden;
+      }
+      .info-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 12px 16px;
+        font-size: 14px;
+      }
+      .info-row span:first-child {
+        color: var(--dim);
+      }
+      .info-row span:last-child {
+        font-family: var(--fm);
+        font-size: 13px;
+        color: var(--teal-light);
+      }
+      .info-divider {
+        height: 1px;
+        background: var(--gb);
+        margin: 0 16px;
+      }
+      .trade-actions {
+        display: flex;
+        gap: 12px;
+        padding: 14px 15px 20px;
+      }
+      .trade-btn {
+        flex: 1;
+        height: 54px;
+        border: none;
+        border-radius: 14px;
+        font-family: var(--fh);
+        font-size: 16px;
+        font-weight: 700;
+        letter-spacing: 1px;
+        cursor: pointer;
+        transition:
+          transform 0.1s,
+          opacity 0.2s;
+      }
+      .trade-btn:active {
+        transform: scale(0.97);
+      }
+      .sell-btn {
+        background: var(--red);
+        color: #fff;
+      }
+      .sell-btn:hover {
+        opacity: 0.88;
+      }
+      .buy-btn {
+        background: var(--green);
+        color: #fff;
+      }
+      .buy-btn:hover {
+        opacity: 0.88;
+      }
+
+      /* ══ WALLET ══════════════════════════════════════ */
+      .wallet-card-wrap {
+        padding: 0 15px 16px;
+      }
+      .wallet-card {
+        padding: 26px 22px 22px;
+        min-height: 165px;
+      }
+      .wallet-card-top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 16px;
+      }
+      .wallet-label {
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--dim);
+        letter-spacing: 0.5px;
+      }
+      .eye-btn {
+        background: none;
+        border: none;
+        cursor: pointer;
+        padding: 2px;
+      }
+      .wallet-balance {
+        font-family: var(--fm);
+        font-size: 34px;
+        font-weight: 700;
+        letter-spacing: 2px;
+        margin-bottom: 12px;
+      }
+      .wallet-change {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-family: var(--fm);
+        font-size: 13px;
+      }
+      .arrow-up {
+        color: var(--green);
+      }
+      #wallet-pct {
+        color: var(--green);
+        font-weight: 700;
+      }
+      #wallet-gain {
+        color: var(--dim);
+      }
+      .topup-btn {
+        display: block;
+        width: calc(100% - 30px);
+        margin: 0 15px 18px;
+        padding: 15px;
+        background: var(--glass);
+        border: 1px solid var(--gb);
+        color: #fff;
+        font-family: var(--fh);
+        font-size: 14px;
+        font-weight: 600;
+        border-radius: 14px;
+        cursor: pointer;
+        transition:
+          background 0.2s,
+          border-color 0.2s;
+      }
+      .topup-btn:hover {
+        background: var(--teal-dim);
+        border-color: var(--teal);
+      }
+      .assets-label-row {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 0 20px 12px;
+      }
+      .assets-label {
+        font-size: 20px;
+        font-weight: 700;
+      }
+      .assets-count {
+        font-size: 16px;
+        color: var(--dim);
+      }
+      .wallet-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+        padding: 0 15px 20px;
+      }
+      .wallet-item {
+        background: var(--glass);
+        border: 1px solid var(--gb);
+        border-radius: 14px;
+        padding: 14px;
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+      }
+      .wallet-item-symbol {
+        font-size: 12px;
+        font-weight: 700;
+        color: var(--teal-light);
+        font-family: var(--fm);
+      }
+      .wallet-item-amount {
+        font-size: 11px;
+        color: var(--dim);
+      }
+      .wallet-item-value {
+        font-size: 14px;
+        font-weight: 700;
+        font-family: var(--fm);
+      }
+      .empty-wallet {
+        grid-column: 1/-1;
+        text-align: center;
+        color: var(--dim);
+        font-size: 14px;
+        padding: 30px 0;
+      }
+
+      /* ══ ADMIN ═══════════════════════════════════════ */
+      .admin-stats {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+        padding: 0 15px 4px;
+      }
+      .stat-card {
+        padding: 16px 12px;
+        text-align: center;
+      }
+      .stat-val {
+        font-family: var(--fm);
+        font-size: 18px;
+        font-weight: 700;
+        color: var(--teal-light);
+        margin-bottom: 4px;
+      }
+      .stat-lbl {
+        font-size: 10px;
+        color: var(--dim);
+        letter-spacing: 1px;
+        text-transform: uppercase;
+      }
+      .admin-table-wrap {
+        padding: 0 15px 30px;
+        overflow-x: auto;
+      }
+      .admin-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 13px;
+        min-width: 560px;
+      }
+      .admin-table th {
+        background: rgba(100, 193, 146, 0.13);
+        color: var(--teal-light);
+        font-size: 10px;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+        padding: 10px 12px;
+        text-align: left;
+        border-bottom: 1px solid var(--gb);
+      }
+      .admin-table td {
+        padding: 11px 12px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+        vertical-align: middle;
+      }
+      .admin-table tr:hover td {
+        background: rgba(255, 255, 255, 0.04);
+      }
+      .role-badge {
+        display: inline-block;
+        padding: 3px 10px;
+        border-radius: 20px;
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+        font-family: var(--fm);
+      }
+      .role-badge.admin {
+        background: rgba(255, 193, 7, 0.18);
+        color: #ffc107;
+        border: 1px solid rgba(255, 193, 7, 0.4);
+      }
+      .role-badge.user {
+        background: var(--teal-dim);
+        color: var(--teal-light);
+        border: 1px solid var(--teal);
+      }
+      .tbl-actions {
+        display: flex;
+        gap: 6px;
+        flex-wrap: wrap;
+      }
+      .tbl-btn {
+        padding: 4px 10px;
+        border: 1px solid var(--gb);
+        border-radius: 8px;
+        background: var(--glass);
+        color: #fff;
+        font-size: 11px;
+        font-weight: 600;
+        cursor: pointer;
+        font-family: var(--fh);
+        transition: background 0.15s;
+      }
+      .tbl-btn:hover {
+        background: rgba(255, 255, 255, 0.18);
+      }
+      .tbl-btn.danger {
+        border-color: rgba(232, 22, 62, 0.5);
+        color: #ff8c8c;
+      }
+      .tbl-btn.danger:hover {
+        background: rgba(232, 22, 62, 0.2);
+      }
+      .tbl-btn.promote {
+        border-color: rgba(255, 193, 7, 0.4);
+        color: #ffc107;
+      }
+
+      /* ══ MODALS ══════════════════════════════════════ */
+      .modal-overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.6);
+        backdrop-filter: blur(6px);
+        z-index: 200;
+        align-items: center;
+        justify-content: center;
+      }
+      .modal-overlay.active {
+        display: flex;
+      }
+      .modal {
+        width: 90%;
+        max-width: 360px;
+        padding: 26px 22px;
+        animation: scaleIn 0.22s ease;
+      }
+      @keyframes scaleIn {
+        from {
+          opacity: 0;
+          transform: scale(0.92);
+        }
+        to {
+          opacity: 1;
+          transform: none;
+        }
+      }
+      .modal-title {
+        font-size: 20px;
+        font-weight: 800;
+        margin-bottom: 5px;
+      }
+      .modal-balance {
+        font-size: 13px;
+        color: var(--dim);
+        margin-bottom: 18px;
+      }
+      .modal-input {
+        width: 100%;
+        background: rgba(255, 255, 255, 0.08);
+        border: 1px solid var(--gb);
+        border-radius: 12px;
+        padding: 13px 16px;
+        color: #fff;
+        font-family: var(--fm);
+        font-size: 15px;
+        outline: none;
+        margin-bottom: 18px;
+        transition: border-color 0.2s;
+      }
+      .modal-input:focus {
+        border-color: var(--teal);
+      }
+      .modal-input::placeholder {
+        color: rgba(255, 255, 255, 0.35);
+      }
+      .modal-actions {
+        display: flex;
+        gap: 10px;
+      }
+      .modal-btn {
+        flex: 1;
+        height: 48px;
+        border: none;
+        border-radius: 12px;
+        font-family: var(--fh);
+        font-size: 14px;
+        font-weight: 700;
+        cursor: pointer;
+        transition:
+          opacity 0.2s,
+          transform 0.1s;
+      }
+      .modal-btn:active {
+        transform: scale(0.97);
+      }
+      .modal-btn.cancel {
+        background: var(--glass);
+        border: 1px solid var(--gb);
+        color: #fff;
+      }
+      .modal-btn.confirm {
+        background: var(--teal);
+        color: #fff;
+      }
+      .modal-btn.confirm.sell {
+        background: var(--red);
+      }
+
+      /* ══ TOAST ═══════════════════════════════════════ */
+      .toast {
+        position: fixed;
+        bottom: calc(var(--nav) + 14px);
+        left: 50%;
+        transform: translateX(-50%);
+        background: rgba(15, 35, 25, 0.96);
+        border: 1px solid var(--teal);
+        color: var(--teal-light);
+        padding: 11px 22px;
+        border-radius: 30px;
+        font-size: 13px;
+        font-weight: 600;
+        white-space: nowrap;
+        opacity: 0;
+        transition: opacity 0.3s;
+        z-index: 300;
+        pointer-events: none;
+      }
+      .toast.show {
+        opacity: 1;
+      }
+      .toast.error {
+        border-color: var(--red);
+        color: #ff9a9a;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- AUTH -->
+    <div id="screen-auth" class="screen active">
+      <div class="auth-bg"></div>
+      <div class="auth-wrap">
+        <div class="auth-logo">
+          <svg width="52" height="52" viewBox="0 0 56 56">
+            <circle cx="28" cy="28" r="28" fill="rgba(100,193,146,0.15)" />
+            <path
+              d="M28 10L44 20V36L28 46L12 36V20Z"
+              stroke="#7FFFD4"
+              stroke-width="1.5"
+              fill="none"
+            />
+            <circle cx="28" cy="28" r="7" fill="#7FFFD4" />
+          </svg>
+          <span class="auth-brand">CryptoMaster</span>
+        </div>
+
+        <div class="auth-card glass-card" id="form-login">
+          <h2 class="auth-title">Welcome Back</h2>
+          <p class="auth-sub">Sign in to your account</p>
+          <div class="field-group"
+            ><label>Email or Username</label
+            ><input
+              type="text"
+              id="login-user"
+              placeholder="Enter email/username"
+              autocomplete="username"
+          /></div>
+          <div class="field-group"
+            ><label>Password</label
+            ><input
+              type="password"
+              id="login-pass"
+              placeholder="Enter password"
+              autocomplete="current-password"
+          /></div>
+          <div class="auth-error" id="login-error"></div>
+          <button class="auth-btn" id="login-btn">Sign In</button>
+          <p class="auth-switch"
+            >No account? <span class="link" id="go-register">Register</span></p
+          >
+          <p class="auth-hint"
+            >Default Admin: <b><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="640b06051d01005551495256515424000d114a0100114a0600">[email&#160;protected]</a></b><br />Password:
+            <b>password</b></p
+          >
+        </div>
+
+        <div class="auth-card glass-card hidden" id="form-register">
+          <h2 class="auth-title">Create Account</h2>
+          <p class="auth-sub">Join CryptoMaster today</p>
+          <div class="field-group"
+            ><label>Email or Username</label
+            ><input
+              type="text"
+              id="reg-user"
+              placeholder="Choose a username or email"
+              autocomplete="username"
+          /></div>
+          <div class="field-group"
+            ><label>Password</label
+            ><input
+              type="password"
+              id="reg-pass"
+              placeholder="At least 6 characters"
+              autocomplete="new-password"
+          /></div>
+          <div class="field-group"
+            ><label>Confirm Password</label
+            ><input
+              type="password"
+              id="reg-pass2"
+              placeholder="Repeat password"
+          /></div>
+          <div class="auth-error" id="reg-error"></div>
+          <button class="auth-btn" id="reg-btn">Create Account</button>
+          <p class="auth-switch"
+            >Have an account? <span class="link" id="go-login">Sign In</span></p
+          >
+        </div>
+      </div>
+    </div>
+
+    <!-- ONBOARDING -->
+    <div id="screen-onboard" class="screen">
+      <div class="auth-bg"></div>
+      <div class="onboard-content">
+        <div class="onboard-logo">
+          <svg width="72" height="72" viewBox="0 0 72 72">
+            <circle cx="36" cy="36" r="36" fill="rgba(255,255,255,0.1)" />
+            <path
+              d="M36 16L52 28L52 44L36 56L20 44L20 28Z"
+              stroke="#7FFFD4"
+              stroke-width="2"
+              fill="none"
+            />
+            <circle cx="36" cy="36" r="8" fill="#7FFFD4" />
+          </svg>
+        </div>
+        <div class="onboard-slides">
+          <div class="slide active"
+            ><h1 class="onboard-title">Track the Market</h1
+            ><p class="onboard-desc"
+              >Real-time prices for hundreds of crypto pairs, straight from
+              Binance.</p
+            ></div
+          >
+          <div class="slide"
+            ><h1 class="onboard-title">Trade Anytime</h1
+            ><p class="onboard-desc"
+              >Buy and sell with candlestick charts and multiple time
+              intervals.</p
+            ></div
+          >
+          <div class="slide"
+            ><h1 class="onboard-title">Manage Your Wallet</h1
+            ><p class="onboard-desc"
+              >Track your portfolio balance and assets in one clean
+              dashboard.</p
+            ></div
+          >
+        </div>
+        <div class="onboard-dots">
+          <span class="dot active"></span><span class="dot"></span
+          ><span class="dot"></span>
+        </div>
+        <button class="onboard-btn" id="onboard-next">Next</button>
+        <button class="onboard-skip" id="onboard-skip">Skip</button>
+      </div>
+    </div>
+
+    <!-- MAIN APP -->
+    <div id="screen-app" class="screen">
+      <div class="app-bg"></div>
+
+      <!-- Market -->
+      <div class="page active" id="page-market">
+        <header class="top-bar">
+          <div class="top-bar-left">
+            <div class="avatar-ring"
+              ><svg width="28" height="28" viewBox="0 0 32 32">
+                <circle cx="16" cy="12" r="6" fill="#7FFFD4" />
+                <ellipse cx="16" cy="26" rx="10" ry="6" fill="#7FFFD4" /></svg
+            ></div>
+            <div
+              ><p class="greeting">Welcome,</p
+              ><p class="username" id="nav-username">Trader</p></div
+            >
+          </div>
+          <div class="top-bar-right">
+            <div class="balance-chip" id="header-balance">$110.00</div>
+            <button class="icon-btn" id="logout-btn" title="Logout">
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2.2"
+              >
+                <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4" />
+                <polyline points="16 17 21 12 16 7" />
+                <line x1="21" y1="12" x2="9" y2="12" />
+              </svg>
+            </button>
+          </div>
+        </header>
+
+        <div class="news-carousel-wrap">
+          <div class="news-carousel">
+            <div
+              class="news-card"
+              onclick="window.open('https://cryptonews.com', '_blank')"
+              ><div
+                class="news-img"
+                style="background: linear-gradient(135deg, #1a3a4a, #0d5c6b)"
+                ><span class="news-src">cryptonews</span></div
+              ><p class="news-headline"
+                >Bitcoin Price Prediction as Bears Take Control — How Low Can
+                BTC Go?</p
+              ></div
+            >
+            <div
+              class="news-card"
+              onclick="window.open('https://cnbc.com/crypto', '_blank')"
+              ><div
+                class="news-img"
+                style="background: linear-gradient(135deg, #1a2a4a, #233880)"
+                ><span class="news-src">CNBC</span></div
+              ><p class="news-headline"
+                >Michael Burry Believes Binance Crypto Exchange Audit Is
+                Meaningless</p
+              ></div
+            >
+            <div
+              class="news-card"
+              onclick="window.open('https://okx.com', '_blank')"
+              ><div
+                class="news-img"
+                style="background: linear-gradient(135deg, #2a1a4a, #5c2080)"
+                ><span class="news-src">OKX</span></div
+              ><p class="news-headline"
+                >Leading Crypto Exchange Reports Outage — Deposits & Withdrawals
+                Affected</p
+              ></div
+            >
+            <div
+              class="news-card"
+              onclick="window.open('https://binance.com', '_blank')"
+              ><div
+                class="news-img"
+                style="background: linear-gradient(135deg, #3a2a0a, #8c6e00)"
+                ><span class="news-src">BINANCE</span></div
+              ><p class="news-headline"
+                >Binance Sees Over $3 Billion in Customer Withdrawals in 24
+                Hours</p
+              ></div
+            >
+            <div
+              class="news-card"
+              onclick="window.open('https://cryptonews.com', '_blank')"
+              ><div
+                class="news-img"
+                style="background: linear-gradient(135deg, #3a0a0a, #8c1c00)"
+                ><span class="news-src">FTX</span></div
+              ><p class="news-headline"
+                >New FTX CEO Says 'Unacceptable Practices' Led to FTX
+                Collapse</p
+              ></div
+            >
+          </div>
+        </div>
+
+        <div class="section-label">Live Markets</div>
+        <div class="market-list" id="market-list"
+          ><div class="loading-spinner"><div class="spinner"></div></div
+        ></div>
+      </div>
+
+      <!-- Trade -->
+      <div class="page" id="page-trade">
+        <header class="top-bar trade-bar">
+          <button class="back-btn" id="back-btn">&#8592;</button>
+          <div class="trade-symbol-info"
+            ><span class="trade-symbol-name" id="trade-symbol-name">BTC</span
+            ><span class="trade-pair-label">/USDT</span></div
+          >
+          <img
+            id="trade-logo"
+            src=""
+            alt=""
+            class="trade-logo-img"
+            onerror="this.src = 'assets/logos/UNKNOWN.png'"
+          />
+        </header>
+        <div class="trade-price-block">
+          <div class="trade-price" id="trade-price">$0.00</div>
+          <div class="trade-change" id="trade-change">+0.00%</div>
+        </div>
+        <div class="interval-bar">
+          <button class="interval-btn" data-interval="1m">1m</button>
+          <button class="interval-btn" data-interval="5m">5m</button>
+          <button class="interval-btn active" data-interval="15m">15m</button>
+          <button class="interval-btn" data-interval="1h">1h</button>
+          <button class="interval-btn" data-interval="4h">4h</button>
+          <button class="interval-btn" data-interval="1d">1d</button>
+        </div>
+        <div class="chart-container">
+          <canvas id="trade-chart"></canvas>
+          <div class="chart-loading" id="chart-loading"
+            ><div class="spinner"></div
+          ></div>
+        </div>
+        <div class="info-body">
+          <div class="info-row"
+            ><span>Opening Price</span><span id="info-open">—</span></div
+          ><div class="info-divider"></div>
+          <div class="info-row"
+            ><span>Close Price</span><span id="info-close">—</span></div
+          ><div class="info-divider"></div>
+          <div class="info-row"
+            ><span>High Price</span><span id="info-high">—</span></div
+          ><div class="info-divider"></div>
+          <div class="info-row"
+            ><span>Low Price</span><span id="info-low">—</span></div
+          ><div class="info-divider"></div>
+        </div>
+        <div class="trade-actions">
+          <button class="trade-btn sell-btn" id="sell-btn">Sell</button>
+          <button class="trade-btn buy-btn" id="buy-btn">Buy</button>
+        </div>
+      </div>
+
+      <!-- Wallet -->
+      <div class="page" id="page-wallet">
+        <header class="top-bar"
+          ><div
+            ><p class="greeting">Portfolio</p
+            ><p class="username">Overview</p></div
+          ></header
+        >
+        <div class="wallet-card-wrap">
+          <div class="wallet-card glass-card">
+            <div class="wallet-card-top">
+              <span class="wallet-label">Total Balance (USD)</span>
+              <button class="eye-btn" id="eye-btn">
+                <svg
+                  id="eye-icon"
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="white"
+                  stroke-width="2"
+                >
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                  <circle cx="12" cy="12" r="3" />
+                </svg>
+              </button>
+            </div>
+            <div class="wallet-balance" id="wallet-balance">$110.00</div>
+            <div class="wallet-change"
+              ><span class="arrow-up">↑</span><span id="wallet-pct">4.82%</span
+              ><span id="wallet-gain">(+$30)</span></div
+            >
+          </div>
+        </div>
+        <button class="topup-btn" id="topup-btn"
+          >⚡ Get Test Tokens (+$20,000)</button
+        >
+        <div class="assets-label-row"
+          ><span class="assets-label">My Assets</span
+          ><span class="assets-count" id="assets-count">( 0 )</span></div
+        >
+        <div class="wallet-grid" id="wallet-grid"
+          ><div class="empty-wallet">No assets yet. Buy some crypto!</div></div
+        >
+      </div>
+
+      <!-- Admin -->
+      <div class="page" id="page-admin">
+        <header class="top-bar">
+          <div
+            ><p class="greeting">Admin</p><p class="username">Dashboard</p></div
+          >
+          <button class="icon-btn" id="admin-refresh" title="Refresh">
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.2"
+            >
+              <polyline points="23 4 23 10 17 10" />
+              <path d="M20.49 15a9 9 0 11-2.12-9.36L23 10" />
+            </svg>
+          </button>
+        </header>
+
+        <div class="admin-stats">
+          <div class="stat-card glass-card"
+            ><div class="stat-val" id="stat-users">—</div
+            ><div class="stat-lbl">Users</div></div
+          >
+          <div class="stat-card glass-card"
+            ><div class="stat-val" id="stat-balance">—</div
+            ><div class="stat-lbl">Total Balance</div></div
+          >
+          <div class="stat-card glass-card"
+            ><div class="stat-val" id="stat-holdings">—</div
+            ><div class="stat-lbl">Holdings</div></div
+          >
+        </div>
+
+        <div class="section-label" style="margin-top: 8px">User Management</div>
+        <div class="admin-table-wrap">
+          <table class="admin-table">
+            <thead
+              ><tr
+                ><th>#</th><th>Username</th><th>Role</th><th>Balance</th
+                ><th>Assets</th><th>Last Login</th><th>Actions</th></tr
+              ></thead
+            >
+            <tbody id="admin-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <nav class="bottom-nav">
+        <button class="nav-btn active" data-page="market">
+          <svg
+            width="22"
+            height="22"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
+            <polyline points="9 22 9 12 15 12 15 22" />
+          </svg>
+          <span>Home</span>
+        </button>
+        <button class="nav-btn" data-page="wallet">
+          <svg
+            width="22"
+            height="22"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <rect x="1" y="4" width="22" height="16" rx="2" ry="2" />
+            <line x1="1" y1="10" x2="23" y2="10" />
+          </svg>
+          <span>Wallet</span>
+        </button>
+        <button class="nav-btn hidden" id="nav-admin-btn" data-page="admin">
+          <svg
+            width="22"
+            height="22"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <circle cx="12" cy="8" r="4" />
+            <path d="M20 21a8 8 0 10-16 0" />
+            <circle cx="18" cy="18" r="3" />
+            <line x1="20.2" y1="20.2" x2="22" y2="22" />
+          </svg>
+          <span>Admin</span>
+        </button>
+      </nav>
+    </div>
+
+    <!-- Trade Modal -->
+    <div class="modal-overlay" id="modal-overlay">
+      <div class="modal glass-card">
+        <h3 class="modal-title" id="modal-title">Buy BTC</h3>
+        <p class="modal-balance" id="modal-balance">Balance: $110</p>
+        <input
+          type="number"
+          class="modal-input"
+          id="modal-input"
+          placeholder="Amount in USD ($)"
+          min="0"
+        />
+        <div class="modal-actions">
+          <button class="modal-btn cancel" id="modal-cancel">Cancel</button>
+          <button class="modal-btn confirm" id="modal-confirm">Confirm</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Admin Edit Balance Modal -->
+    <div class="modal-overlay" id="admin-bal-overlay">
+      <div class="modal glass-card">
+        <h3 class="modal-title">Edit User Balance</h3>
+        <p class="modal-balance" id="admin-edit-lbl"></p>
+        <input
+          type="number"
+          class="modal-input"
+          id="admin-edit-val"
+          placeholder="New balance in USD"
+          min="0"
+        />
+        <div class="modal-actions">
+          <button class="modal-btn cancel" id="admin-edit-cancel"
+            >Cancel</button
+          >
+          <button class="modal-btn confirm" id="admin-edit-save">Save</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+      /* ═══════════════════════════════════════════════════
+     CryptoMaster — app.js (Integrated)
+     Auth + Market (live) + Trade + Wallet + Admin
+  ═══════════════════════════════════════════════════ */
+
+      // Changed to point directly to the local api.php
+      const API = "api.php";
+
+      const COIN_LOGOS = [
+        "BTCUSDT",
+        "ADAUSDT",
+        "ATOMUSDT",
+        "AVAXUSDT",
+        "BNBUSDT",
+        "BUSDUSDT",
+        "DARUSDT",
+        "DOGEUSDT",
+        "ETHUSDT",
+        "FETUSDT",
+        "FTMUSDT",
+        "LINKUSDT",
+        "LTCUSDT",
+        "MATICUSDT",
+        "NEARUSDT",
+        "OPUSDT",
+        "SANDUSDT",
+        "SCUSDT",
+        "SHIBUSDT",
+        "SOLUSDT",
+        "STORJUSDT",
+        "TRXUSDT",
+        "WAVESUSDT",
+        "XRPUSDT",
+      ];
+
+      /* ── State ─────────────────────────────────────── */
+      let S = {
+        user: null, // {id, username, role, balance}
+        wallet: [], // [{symbol, amount, cost_basis}]
+        marketData: [],
+        currentSymbol: null,
+        currentIndex: null,
+        currentInterval: "15m",
+        balanceVisible: true,
+        tradeMode: null,
+        chart: null,
+        adminEditUID: null,
+        onboardDone: false,
+      };
+
+      /* ── Helpers ───────────────────────────────────── */
+      const $ = (id) => document.getElementById(id);
+      const el = (sel) => document.querySelector(sel);
+
+      const fmt = (n) =>
+        parseFloat(n).toLocaleString("en-US", {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 8,
+        });
+      const fmtPrice = (n) => {
+        n = parseFloat(n);
+        if (isNaN(n)) return "$0.00";
+        if (n >= 1000)
+          return "$" + n.toLocaleString("en-US", { maximumFractionDigits: 2 });
+        if (n >= 1) return "$" + n.toFixed(4);
+        return "$" + n.toPrecision(4);
+      };
+
+      function showToast(msg, isError = false) {
+        const t = $("toast");
+        t.textContent = msg;
+        t.className = "toast show" + (isError ? " error" : "");
+        clearTimeout(t._t);
+        t._t = setTimeout(() => t.classList.remove("show"), 3000);
+      }
+
+      function showScreen(id) {
+        document
+          .querySelectorAll(".screen")
+          .forEach((s) => s.classList.remove("active"));
+        $(id).classList.add("active");
+      }
+
+      function showPage(name) {
+        document
+          .querySelectorAll(".page")
+          .forEach((p) => p.classList.remove("active"));
+        $("page-" + name).classList.add("active");
+        document
+          .querySelectorAll(".nav-btn")
+          .forEach((b) =>
+            b.classList.toggle("active", b.dataset.page === name),
+          );
+        if (name === "wallet") renderWallet();
+        if (name === "admin") loadAdminData();
+      }
+
+      /* ── API call wrapper ──────────────────────────── */
+      async function api(action, body = null, method = "GET") {
+        const opts = {
+          method,
+          headers: { "Content-Type": "application/json" },
+        };
+        if (body) {
+          opts.method = "POST";
+          opts.body = JSON.stringify(body);
+        }
+        const r = await fetch(`${API}?action=${action}`, opts);
+        return r.json();
+      }
+
+      /* ══════════════════════════════════════════════════
+     AUTH
+  ════════════════════════════════════════════════════ */
+      function showAuthError(id, msg) {
+        const el = $(id);
+        el.textContent = msg;
+        el.classList.add("show");
+      }
+      function clearAuthError(id) {
+        const el = $(id);
+        el.textContent = "";
+        el.classList.remove("show");
+      }
+
+      $("go-register").addEventListener("click", () => {
+        $("form-login").classList.add("hidden");
+        $("form-register").classList.remove("hidden");
+        clearAuthError("reg-error");
+      });
+      $("go-login").addEventListener("click", () => {
+        $("form-register").classList.add("hidden");
+        $("form-login").classList.remove("hidden");
+        clearAuthError("login-error");
+      });
+
+      $("login-btn").addEventListener("click", async () => {
+        clearAuthError("login-error");
+        const username = $("login-user").value.trim();
+        const password = $("login-pass").value;
+        if (!username || !password) {
+          showAuthError("login-error", "Please fill all fields.");
+          return;
+        }
+
+        $("login-btn").disabled = true;
+        $("login-btn").textContent = "Signing in…";
+
+        const res = await api("login", { username, password });
+        $("login-btn").disabled = false;
+        $("login-btn").textContent = "Sign In";
+
+        if (!res.ok) {
+          showAuthError("login-error", res.error);
+          return;
+        }
+        onLoggedIn(res.data);
+      });
+
+      $("reg-btn").addEventListener("click", async () => {
+        clearAuthError("reg-error");
+        const username = $("reg-user").value.trim();
+        const password = $("reg-pass").value;
+        const pass2 = $("reg-pass2").value;
+        if (!username || !password || !pass2) {
+          showAuthError("reg-error", "Please fill all fields.");
+          return;
+        }
+        if (password !== pass2) {
+          showAuthError("reg-error", "Passwords do not match.");
+          return;
+        }
+
+        $("reg-btn").disabled = true;
+        $("reg-btn").textContent = "Creating…";
+
+        const res = await api("register", { username, password });
+        $("reg-btn").disabled = false;
+        $("reg-btn").textContent = "Create Account";
+
+        if (!res.ok) {
+          showAuthError("reg-error", res.error);
+          return;
+        }
+        onLoggedIn(res.data, true);
+      });
+
+      // Enter key support
+      [$("login-pass"), $("login-user")].forEach((inp) =>
+        inp.addEventListener("keydown", (e) => {
+          if (e.key === "Enter") $("login-btn").click();
+        }),
+      );
+      [$("reg-pass2")].forEach((inp) =>
+        inp.addEventListener("keydown", (e) => {
+          if (e.key === "Enter") $("reg-btn").click();
+        }),
+      );
+
+      $("logout-btn").addEventListener("click", async () => {
+        await api("logout");
+        S.user = null;
+        S.wallet = [];
+        S.marketData = [];
+        if (S.chart) {
+          S.chart.destroy();
+          S.chart = null;
+        }
+        $("login-user").value = "";
+        $("login-pass").value = "";
+        showScreen("screen-auth");
+        $("form-register").classList.add("hidden");
+        $("form-login").classList.remove("hidden");
+      });
+
+      function onLoggedIn(user, isNew = false) {
+        S.user = user;
+        S.wallet = (user.wallet || []).map((w) => ({
+          ...w,
+          cost_basis: w.cost_basis ?? 0,
+        }));
+
+        // Update UI
+        $("nav-username").textContent = user.username.split("@")[0]; // Safe if email
+
+        // Show admin nav if admin
+        if (user.role === "admin") {
+          $("nav-admin-btn").classList.remove("hidden");
+        } else {
+          $("nav-admin-btn").classList.add("hidden");
+        }
+
+        updateBalanceDisplay();
+
+        if (isNew && !localStorage.getItem("cm_onboard_done")) {
+          showScreen("screen-onboard");
+        } else {
+          enterApp();
+        }
+      }
+
+      /* ══════════════════════════════════════════════════
+     ONBOARDING
+  ════════════════════════════════════════════════════ */
+      let slideIdx = 0;
+      const slides = document.querySelectorAll(".slide");
+      const dots = document.querySelectorAll(".dot");
+
+      function goSlide(n) {
+        slides[slideIdx].classList.remove("active");
+        dots[slideIdx].classList.remove("active");
+        slideIdx = n;
+        slides[slideIdx].classList.add("active");
+        dots[slideIdx].classList.add("active");
+        $("onboard-next").textContent =
+          slideIdx === slides.length - 1 ? "Get Started" : "Next";
+      }
+
+      $("onboard-next").addEventListener("click", () => {
+        if (slideIdx < slides.length - 1) goSlide(slideIdx + 1);
+        else {
+          localStorage.setItem("cm_onboard_done", "1");
+          enterApp();
+        }
+      });
+      $("onboard-skip").addEventListener("click", () => {
+        localStorage.setItem("cm_onboard_done", "1");
+        enterApp();
+      });
+      dots.forEach((d, i) => d.addEventListener("click", () => goSlide(i)));
+
+      /* ══════════════════════════════════════════════════
+     APP ENTRY
+  ════════════════════════════════════════════════════ */
+      function enterApp() {
+        showScreen("screen-app");
+        showPage("market");
+        loadMarket();
+        // Refresh market every 20s
+        clearInterval(window._mktTimer);
+        window._mktTimer = setInterval(loadMarket, 20000);
+      }
+
+      /* ══════════════════════════════════════════════════
+     NAVIGATION
+  ════════════════════════════════════════════════════ */
+      document.querySelectorAll(".nav-btn").forEach((btn) => {
+        btn.addEventListener("click", () => showPage(btn.dataset.page));
+      });
+
+      /* ══════════════════════════════════════════════════
+     MARKET — Fixed to use PHP proxy + Binance fallback
+  ════════════════════════════════════════════════════ */
+      async function loadMarket() {
+        try {
+          const res = await fetch(`${API}?action=market`);
+          const json = await res.json();
+
+          if (json.ok && Array.isArray(json.data) && json.data.length > 0) {
+            S.marketData = json.data;
+            renderMarket(json.data);
+            return;
+          }
+          throw new Error(json.error || "proxy failed");
+        } catch (e) {
+          console.warn("PHP proxy failed, trying Binance direct:", e.message);
+          try {
+            const r = await fetch("https://api.binance.com/api/v3/ticker/24hr");
+            const all = await r.json();
+            const filtered = all
+              .filter(
+                (e) =>
+                  e.symbol.endsWith("USDT") &&
+                  parseFloat(e.lastPrice) > 0 &&
+                  parseFloat(e.quoteVolume) > 500000,
+              )
+              .sort(
+                (a, b) => parseFloat(b.quoteVolume) - parseFloat(a.quoteVolume),
+              )
+              .slice(0, 100)
+              .map((e) => ({
+                symbol: e.symbol,
+                lastPrice: e.lastPrice,
+                priceChangePercent: e.priceChangePercent,
+              }));
+
+            S.marketData = filtered;
+            renderMarket(filtered);
+          } catch (e2) {
+            $("market-list").innerHTML = `
+          <div class="market-error">
+            <b>⚠ Could not load market data.</b><br>
+            Make sure the PHP server is running with curl enabled,<br>
+            or that your browser allows the Binance API request.<br><br>
+            <small>${e2.message}</small>
+          </div>`;
+          }
+        }
+      }
+
+      function renderMarket(coins) {
+        const list = $("market-list");
+        list.innerHTML = "";
+
+        coins.forEach((coin, i) => {
+          const isMinus = coin.priceChangePercent.toString().startsWith("-");
+          const name = coin.symbol.replace("USDT", "");
+          const pct = parseFloat(coin.priceChangePercent).toFixed(2);
+
+          const card = document.createElement("div");
+          card.className = "market-card";
+          card.style.animationDelay = Math.min(i * 0.018, 0.6) + "s";
+
+          let logoHtml = COIN_LOGOS.includes(coin.symbol)
+            ? `<img class="coin-logo" src="assets/logos/${coin.symbol}.png" onerror="this.outerHTML='<div class=coin-fallback>${name.slice(0, 3)}</div>'" alt="${name}"/>`
+            : `<div class="coin-fallback">${name.slice(0, 3)}</div>`;
+
+          card.innerHTML = `
+        ${logoHtml}
+        <span class="coin-name">${name}</span>
+        <span class="coin-price">${fmtPrice(coin.lastPrice)}</span>
+        <span class="pct-badge ${isMinus ? "neg" : "pos"}">${isMinus ? "" : "+"}${pct}%</span>`;
+
+          card.addEventListener("click", () => openTrade(i, coin.symbol));
+          list.appendChild(card);
+        });
+      }
+
+      /* ══════════════════════════════════════════════════
+     TRADE
+  ════════════════════════════════════════════════════ */
+      function openTrade(index, symbol) {
+        S.currentIndex = index;
+        S.currentSymbol = symbol;
+        S.currentInterval = "15m";
+
+        document
+          .querySelectorAll(".interval-btn")
+          .forEach((b) =>
+            b.classList.toggle("active", b.dataset.interval === "15m"),
+          );
+
+        const name = symbol.replace("USDT", "");
+        $("trade-symbol-name").textContent = name;
+        $("trade-logo").src = COIN_LOGOS.includes(symbol)
+          ? `assets/logos/${symbol}.png`
+          : "assets/logos/UNKNOWN.png";
+
+        const m = S.marketData[index];
+        if (m) {
+          $("trade-price").textContent = fmtPrice(m.lastPrice);
+          const pct = parseFloat(m.priceChangePercent);
+          $("trade-change").textContent =
+            (pct >= 0 ? "+" : "") + pct.toFixed(2) + "%";
+          $("trade-change").className =
+            "trade-change " + (pct >= 0 ? "pos" : "neg");
+        }
+
+        showPage("market");
+        document
+          .querySelectorAll(".page")
+          .forEach((p) => p.classList.remove("active"));
+        $("page-trade").classList.add("active");
+        document
+          .querySelectorAll(".nav-btn")
+          .forEach((b) => b.classList.remove("active"));
+
+        loadCandles(symbol, S.currentInterval);
+      }
+
+      $("back-btn").addEventListener("click", () => {
+        showPage("market");
+        if (S.chart) {
+          S.chart.destroy();
+          S.chart = null;
+        }
+      });
+
+      document.querySelectorAll(".interval-btn").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          document
+            .querySelectorAll(".interval-btn")
+            .forEach((b) => b.classList.remove("active"));
+          btn.classList.add("active");
+          S.currentInterval = btn.dataset.interval;
+          if (S.currentSymbol) loadCandles(S.currentSymbol, S.currentInterval);
+        });
+      });
+
+      async function loadCandles(symbol, interval) {
+        $("chart-loading").classList.remove("hidden");
+        try {
+          const res = await fetch(
+            `${API}?action=candles&symbol=${symbol}&interval=${interval}&limit=100`,
+          );
+          const json = await res.json();
+          let candles = json.ok ? json.data : null;
+
+          if (!candles) {
+            const r2 = await fetch(
+              `https://api.binance.com/api/v3/klines?symbol=${symbol}&interval=${interval}&limit=100`,
+            );
+            const raw = await r2.json();
+            candles = raw.map((e) => ({
+              time: e[0],
+              open: +e[1],
+              high: +e[2],
+              low: +e[3],
+              close: +e[4],
+            }));
+          }
+
+          renderChart(candles);
+
+          if (candles.length) {
+            const last = candles[candles.length - 1];
+            $("info-open").textContent = "$" + fmt(last.open);
+            $("info-close").textContent = "$" + fmt(last.close);
+            $("info-high").textContent = "$" + fmt(last.high);
+            $("info-low").textContent = "$" + fmt(last.low);
+          }
+        } catch (e) {
+          console.error("Candle error:", e);
+          showToast("Failed to load chart", true);
+        }
+        $("chart-loading").classList.add("hidden");
+      }
+
+      function renderChart(candles) {
+        if (S.chart) {
+          S.chart.destroy();
+          S.chart = null;
+        }
+        const ctx = $("trade-chart").getContext("2d");
+        S.chart = new Chart(ctx, {
+          type: "candlestick",
+          data: {
+            datasets: [
+              {
+                label: S.currentSymbol,
+                data: candles.map((c) => ({
+                  x: c.time,
+                  o: c.open,
+                  h: c.high,
+                  l: c.low,
+                  c: c.close,
+                })),
+                color: { up: "#04D16D", down: "#E8163E", unchanged: "#aaa" },
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+              x: {
+                type: "time",
+                time: { unit: "minute" },
+                ticks: {
+                  color: "rgba(255,255,255,.4)",
+                  maxRotation: 0,
+                  maxTicksLimit: 5,
+                },
+                grid: { color: "rgba(255,255,255,.06)" },
+              },
+              y: {
+                position: "right",
+                ticks: {
+                  color: "rgba(255,255,255,.4)",
+                  font: { family: "Space Mono", size: 10 },
+                },
+                grid: { color: "rgba(255,255,255,.06)" },
+              },
+            },
+          },
+        });
+      }
+
+      /* ══════════════════════════════════════════════════
+     BUY / SELL MODAL
+  ════════════════════════════════════════════════════ */
+      $("buy-btn").addEventListener("click", () => openTradeModal("buy"));
+      $("sell-btn").addEventListener("click", () => openTradeModal("sell"));
+      $("modal-cancel").addEventListener("click", () =>
+        $("modal-overlay").classList.remove("active"),
+      );
+      $("modal-overlay").addEventListener("click", (e) => {
+        if (e.target === $("modal-overlay"))
+          $("modal-overlay").classList.remove("active");
+      });
+
+      function openTradeModal(mode) {
+        S.tradeMode = mode;
+        const name = S.currentSymbol?.replace("USDT", "");
+        $("modal-title").textContent =
+          (mode === "buy" ? "Buy " : "Sell ") + name;
+        $("modal-balance").textContent =
+          `Your Balance: $${fmt(S.user.balance)}`;
+        $("modal-input").value = "";
+        $("modal-confirm").textContent = mode === "buy" ? "Buy" : "Sell";
+        $("modal-confirm").className =
+          "modal-btn confirm" + (mode === "sell" ? " sell" : "");
+        $("modal-overlay").classList.add("active");
+        setTimeout(() => $("modal-input").focus(), 100);
+      }
+
+      $("modal-confirm").addEventListener("click", async () => {
+        const amtUSD = parseFloat($("modal-input").value);
+        if (!amtUSD || amtUSD <= 0) {
+          showToast("Enter a valid amount", true);
+          return;
+        }
+
+        const symbol = S.currentSymbol;
+        const market = S.marketData[S.currentIndex];
+        if (!market) return;
+        const price = parseFloat(market.lastPrice);
+
+        if (S.tradeMode === "buy") {
+          if (amtUSD > S.user.balance) {
+            $("modal-overlay").classList.remove("active");
+            showToast("Insufficient balance!", true);
+            return;
+          }
+          const coinAmt = amtUSD / price;
+          S.user.balance -= amtUSD;
+          const existing = S.wallet.find((w) => w.symbol === symbol);
+          if (existing) {
+            existing.amount += coinAmt;
+            existing.cost_basis += amtUSD;
+          } else S.wallet.push({ symbol, amount: coinAmt, cost_basis: amtUSD });
+        } else {
+          const existing = S.wallet.find((w) => w.symbol === symbol);
+          if (!existing || existing.amount <= 0) {
+            $("modal-overlay").classList.remove("active");
+            showToast("You don't own this asset", true);
+            return;
+          }
+          const coinAmt = amtUSD / price;
+          if (coinAmt > existing.amount) {
+            showToast("Not enough coins to sell", true);
+            return;
+          }
+          const saleVal = coinAmt * price;
+          existing.amount -= coinAmt;
+          existing.cost_basis -=
+            existing.cost_basis * (coinAmt / existing.amount || 0);
+          S.user.balance += saleVal;
+          if (existing.amount <= 0.000001)
+            S.wallet = S.wallet.filter((w) => w.symbol !== symbol);
+        }
+
+        await saveWallet();
+        updateBalanceDisplay();
+        $("modal-overlay").classList.remove("active");
+        showToast("Transaction Successful ✓");
+      });
+
+      /* ══════════════════════════════════════════════════
+     WALLET
+  ════════════════════════════════════════════════════ */
+      async function saveWallet() {
+        const res = await api("wallet_save", {
+          balance: S.user.balance,
+          wallet: S.wallet,
+        });
+        if (!res.ok) console.error("Wallet save failed:", res.error);
+      }
+
+      $("eye-btn").addEventListener("click", () => {
+        S.balanceVisible = !S.balanceVisible;
+        renderWallet();
+      });
+
+      $("topup-btn").addEventListener("click", async () => {
+        const res = await api("wallet_topup");
+        if (res.ok) {
+          S.user.balance = res.data.balance;
+          updateBalanceDisplay();
+          renderWallet();
+          showToast("+$20,000 Test Tokens Added!");
+        }
+      });
+
+      function updateBalanceDisplay() {
+        const b = S.user?.balance ?? 0;
+        $("header-balance").textContent = "$" + fmt(b);
+        $("wallet-balance").textContent = S.balanceVisible
+          ? "$" + fmt(b)
+          : "$*******";
+      }
+
+      function renderWallet() {
+        updateBalanceDisplay();
+        const vis = S.balanceVisible;
+        $("wallet-pct").textContent = vis ? "4.82%" : "****%";
+        $("wallet-gain").textContent = vis ? "(+$30)" : "($**)";
+        $("eye-icon").innerHTML = vis
+          ? `<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>`
+          : `<path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>`;
+
+        $("assets-count").textContent = `( ${S.wallet.length} )`;
+
+        const grid = $("wallet-grid");
+        if (!S.wallet.length) {
+          grid.innerHTML =
+            '<div class="empty-wallet">No assets yet. Buy some crypto!</div>';
+          return;
+        }
+        grid.innerHTML = S.wallet
+          .map((w) => {
+            const name = w.symbol.replace("USDT", "");
+            const val = vis ? "$" + fmt(w.cost_basis) : "$***";
+            const amt = vis ? w.amount.toPrecision(5) + " " + name : "****";
+            return `<div class="wallet-item">
+        <div class="wallet-item-symbol">${name}/USDT</div>
+        <div class="wallet-item-amount">${amt}</div>
+        <div class="wallet-item-value">${val}</div>
+      </div>`;
+          })
+          .join("");
+      }
+
+      /* ══════════════════════════════════════════════════
+     ADMIN
+  ════════════════════════════════════════════════════ */
+      $("admin-refresh").addEventListener("click", loadAdminData);
+
+      async function loadAdminData() {
+        const res = await api("admin_users");
+        if (!res.ok) {
+          showToast("Failed to load users", true);
+          return;
+        }
+        const users = res.data;
+
+        const total = users.length;
+        const totBal = users.reduce((s, u) => s + parseFloat(u.balance), 0);
+        const totHold = users.reduce(
+          (s, u) => s + parseInt(u.holding_count),
+          0,
+        );
+
+        $("stat-users").textContent = total;
+        $("stat-balance").textContent =
+          "$" + totBal.toLocaleString("en-US", { maximumFractionDigits: 0 });
+        $("stat-holdings").textContent = totHold;
+
+        const tbody = $("admin-tbody");
+        tbody.innerHTML = users
+          .map(
+            (u) => `
+      <tr>
+        <td><span style="color:var(--dim);font-family:var(--fm)">${u.id}</span></td>
+        <td><b>${escHtml(u.username)}</b></td>
+        <td><span class="role-badge ${u.role}">${u.role}</span></td>
+        <td style="font-family:var(--fm)">$${parseFloat(u.balance).toFixed(2)}</td>
+        <td style="font-family:var(--fm)">${u.holding_count}</td>
+        <td style="font-size:11px;color:var(--dim)">${u.last_login ? u.last_login.slice(0, 16) : "Never"}</td>
+        <td>
+          <div class="tbl-actions">
+            <button class="tbl-btn" onclick="adminEditBalance(${u.id},'${escHtml(u.username)}',${u.balance})">Edit $</button>
+            ${u.role !== "admin" ? `<button class="tbl-btn promote" onclick="adminPromote(${u.id})">Make Admin</button>` : ""}
+            ${u.role !== "admin" ? `<button class="tbl-btn danger" onclick="adminDelete(${u.id},'${escHtml(u.username)}')">Delete</button>` : ""}
+          </div>
+        </td>
+      </tr>
+    `,
+          )
+          .join("");
+      }
+
+      function escHtml(s) {
+        return String(s)
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;");
+      }
+
+      function adminEditBalance(uid, username, balance) {
+        S.adminEditUID = uid;
+        $("admin-edit-lbl").textContent =
+          `User: ${username}  (current: $${parseFloat(balance).toFixed(2)})`;
+        $("admin-edit-val").value = parseFloat(balance).toFixed(2);
+        $("admin-bal-overlay").classList.add("active");
+        setTimeout(() => $("admin-edit-val").focus(), 100);
+      }
+      $("admin-edit-cancel").addEventListener("click", () =>
+        $("admin-bal-overlay").classList.remove("active"),
+      );
+      $("admin-edit-save").addEventListener("click", async () => {
+        const bal = parseFloat($("admin-edit-val").value);
+        if (isNaN(bal) || bal < 0) {
+          showToast("Enter a valid balance", true);
+          return;
+        }
+        const res = await api("admin_update_balance", {
+          user_id: S.adminEditUID,
+          balance: bal,
+        });
+        $("admin-bal-overlay").classList.remove("active");
+        if (res.ok) {
+          showToast("Balance updated ✓");
+          loadAdminData();
+        } else showToast(res.error, true);
+      });
+
+      async function adminDelete(uid, username) {
+        if (!confirm(`Delete user "${username}"? This cannot be undone.`))
+          return;
+        const res = await api("admin_delete_user", { user_id: uid });
+        if (res.ok) {
+          showToast(`User ${username} deleted`);
+          loadAdminData();
+        } else showToast(res.error, true);
+      }
+
+      async function adminPromote(uid) {
+        if (!confirm("Promote this user to admin?")) return;
+        const res = await api("admin_make_admin", { user_id: uid });
+        if (res.ok) {
+          showToast("User promoted to admin ✓");
+          loadAdminData();
+        } else showToast(res.error, true);
+      }
+
+      /* ══════════════════════════════════════════════════
+     INIT — Check if already logged in (session)
+  ════════════════════════════════════════════════════ */
+      (async () => {
+        try {
+          const res = await fetch(`${API}?action=me`);
+          const json = await res.json();
+          if (json.ok) {
+            const user = json.data;
+            user.wallet = user.wallet || [];
+            

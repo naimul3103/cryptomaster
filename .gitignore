@@ -1,0 +1,20 @@
+# Environment & secrets — NEVER commit
+.env
+*.env.local
+
+# OS / Editor junk
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*~
+
+# PHP runtime / logs
+*.log
+error_log
+/vendor/
+
+# Node (if you add build tooling later)
+node_modules/
+dist/

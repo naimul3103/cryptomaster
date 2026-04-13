@@ -1,0 +1,23 @@
+# ── CryptoMaster Apache Config ──────────────────────────────────────────────
+
+# Block direct access to sensitive files
+<FilesMatch "^(\.env.*|db\.php|composer\.lock|README\.md)$">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+# Enable rewrite engine (needed for clean URLs if added later)
+Options -Indexes
+Options -MultiViews
+
+# Security headers
+<IfModule mod_headers.c>
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set X-Frame-Options "DENY"
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+    Header always set Permissions-Policy "geolocation=(), camera=(), microphone=()"
+</IfModule>
+
+# Prevent PHP errors from being shown to end users in production
+php_flag display_errors Off
+php_flag log_errors On
